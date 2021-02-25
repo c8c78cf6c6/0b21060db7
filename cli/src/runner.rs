@@ -140,11 +140,20 @@ pub struct CsvLedgerSummary {
 
 impl Into<CsvLedgerSummary> for Account {
     fn into(self) -> CsvLedgerSummary {
+        let amount_available =
+            self.amount_available() as f32 / 10_000f32;
+
+        let amount_held =
+            self.amount_held() as f32 / 10_000f32;
+
+        let amount_total =
+            self.amount_total() as f32 / 10_000f32;
+
         CsvLedgerSummary {
             client: self.id().to_string(),
-            available: self.amount_available().to_string(),
-            held: self.amount_held().to_string(),
-            total: self.amount_total().to_string(),
+            available: amount_available.to_string(),
+            held: amount_held.to_string(),
+            total: amount_total.to_string(),
             locked: format!("{:?}", self.locked()),
         }
     }
