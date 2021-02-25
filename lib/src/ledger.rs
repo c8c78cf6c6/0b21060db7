@@ -1,3 +1,11 @@
+use hashbrown;
+use hashbrown::HashMap;
+
+use crate::account::Account;
+use crate::execution::{ExecutionError, ExecutionResult};
+use crate::traits::execution::TransactionExecution;
+use crate::transaction::{LedgerBookEntry, Transaction, TransactionTag};
+
 /*
 > The client has a single asset account.
 > All transactions are to and from this single asset account;
@@ -26,7 +34,7 @@
 > the withdrawal should fail and the total amount of
 > funds should not change.
 
-# deposit
+# dispute
 
 > A dispute represents a client’s claim that a transaction
 > was erroneous and should be reverse. The transaction
@@ -74,4 +82,34 @@
 > assume this is an error on our partner’s side.
  */
 
-pub struct Ledger;
+pub struct Ledger {
+    accounts: HashMap<u16, Account>,
+}
+
+impl Ledger {
+    pub fn new() -> Ledger {
+        Ledger {
+            accounts: HashMap::new(),
+        }
+    }
+
+    pub fn accounts(&self) -> &HashMap<u16, Account> {
+        &self.accounts
+    }
+}
+
+impl TransactionExecution for Ledger {
+    fn execute_transaction(
+        &mut self,
+        tx: Transaction,
+    ) -> Result<ExecutionResult, ExecutionError> {
+        self.accounts
+            .entry(tx.client_id)
+            .or_insert(
+                Account::new(
+                    tx.client_id,
+                ),
+            )
+            .execute_transaction(tx)
+    }
+}
