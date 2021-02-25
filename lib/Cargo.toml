@@ -1,0 +1,14 @@
+[package]
+name = "simledger"
+version = "0.1.0"
+authors = ["int1h@icloud.com"]
+edition = "2018"
+
+description = "Transaction replay ledger library"
+
+repository = "https://github.com/c8c78cf6c6/3ae0a60426.git"
+readme = "../README.md"
+
+[dependencies]
+hashbrown = { version = "0.9.1", features = ["inline-more", "ahash-compile-time-rng"] }
+
