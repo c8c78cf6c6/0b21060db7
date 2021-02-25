@@ -86,6 +86,23 @@ fn account_basic_balance_credit_debit_check() {
 }
 
 #[test]
+fn account_verify_tx_reverse_hijack_by_reusing_id_impossible() {
+    run_test(
+        // basic balance credit / debit check
+        vec!(
+            (
+                vec!(
+                    fake_tx(1, TransactionTag::Deposit(15000)),
+                    fake_tx(1, TransactionTag::Deposit(1)),
+                    fake_tx(1, TransactionTag::Dispute),
+                ),
+                (15000, 0, 15000, false),
+            ),
+        ),
+    );
+}
+
+#[test]
 fn account_verify_user_cannot_overdraw() {
     run_test(
         // basic balance credit / debit check

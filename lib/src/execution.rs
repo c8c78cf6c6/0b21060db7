@@ -2,12 +2,10 @@ use crate::transaction::{LedgerBookEntry, Transaction};
 
 #[derive(Debug)]
 pub enum ExecutionError {
-    TransactionNotDisputed,
     InsufficientBalance,
-    // should only happen at dispute & chargeback
-    InvalidAccount,
     InvalidTransactionType,
     InvalidTransaction,
+    TransactionExists,
     AccountLocked,
 }
 

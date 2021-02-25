@@ -84,6 +84,12 @@ impl AccountDebitCredit for Account {
     ) -> Result<ExecutionResult, ExecutionError> {
         self.assert_is_not_locked()?;
 
+        if self.book.contains_key(&tx.id) {
+            return Err(
+                ExecutionError::TransactionExists,
+            );
+        }
+
         if let TransactionTag::Withdrawal(amount) = tx.tag {
             if self.amount_available < amount {
                 return Err(ExecutionError::InsufficientBalance);
@@ -112,6 +118,12 @@ impl AccountDebitCredit for Account {
         tx: &Transaction,
     ) -> Result<ExecutionResult, ExecutionError> {
         self.assert_is_not_locked()?;
+
+        if self.book.contains_key(&tx.id) {
+            return Err(
+                ExecutionError::TransactionExists,
+            );
+        }
 
         if let TransactionTag::Deposit(amount) = tx.tag {
             self.book
