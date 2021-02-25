@@ -101,7 +101,7 @@ impl Ledger {
 impl TransactionExecution for Ledger {
     fn execute_transaction(
         &mut self,
-        tx: Transaction,
+        tx: &Transaction,
     ) -> Result<ExecutionResult, ExecutionError> {
         self.accounts
             .entry(tx.client_id)

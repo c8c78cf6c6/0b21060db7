@@ -71,8 +71,6 @@ impl Runner {
             self.csv_reader
                 .deserialize::<CsvTransaction>();
 
-        let i = 0u64;
-
         while let Some(record) = records.next().await {
             let record = unwrap_or_err!(
                 record,
@@ -83,7 +81,7 @@ impl Runner {
 
             self.ledger
                 .execute_transaction(
-                    tx,
+                    &tx,
                 );
         }
 

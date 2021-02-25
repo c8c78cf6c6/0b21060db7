@@ -1,5 +1,6 @@
 use crate::transaction::{LedgerBookEntry, Transaction};
 
+#[derive(Debug)]
 pub enum ExecutionError {
     TransactionNotDisputed,
     InsufficientBalance,
@@ -10,6 +11,7 @@ pub enum ExecutionError {
     AccountLocked,
 }
 
+#[derive(Debug)]
 pub enum ExecutionResult {
     Ok,
     BookEntry(LedgerBookEntry),

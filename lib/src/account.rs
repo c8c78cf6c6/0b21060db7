@@ -3,8 +3,9 @@ use hashbrown::HashMap;
 use crate::execution::{ExecutionError, ExecutionResult};
 use crate::traits::account::{AccountBookActions, AccountBookEntry, AccountDebitCredit};
 use crate::traits::execution::TransactionExecution;
-use crate::traits::transaction::TagConstraints;
+use crate::traits::transaction::{TagConstraints, BookEntryExt};
 use crate::transaction::{LedgerBookEntry, Transaction, TransactionTag};
+use std::collections::BTreeMap;
 
 #[derive(Clone)]
 pub struct Account {
@@ -14,9 +15,9 @@ pub struct Account {
 
     amount_available: i64,
 
-    book: hashbrown::HashMap<u32, LedgerBookEntry>,
-    book_disputed: hashbrown::HashMap<u32, LedgerBookEntry>,
-    book_chargeback: hashbrown::HashMap<u32, LedgerBookEntry>,
+    pub book: BTreeMap<u32, LedgerBookEntry>,
+    pub book_disputed: BTreeMap<u32, LedgerBookEntry>,
+    pub book_chargeback: BTreeMap<u32, LedgerBookEntry>,
 }
 
 impl Account {
@@ -28,9 +29,9 @@ impl Account {
 
             amount_available: 0,
 
-            book: HashMap::new(),
-            book_disputed: HashMap::new(),
-            book_chargeback: HashMap::new(),
+            book: BTreeMap::new(),
+            book_disputed: BTreeMap::new(),
+            book_chargeback: BTreeMap::new(),
         }
     }
 
@@ -88,6 +89,12 @@ impl AccountDebitCredit for Account {
                 return Err(ExecutionError::InsufficientBalance);
             }
 
+            self.book
+                .insert(
+                    tx.id,
+                    tx.clone().into(),
+                );
+
             self.amount_available -= amount;
 
             Ok(
@@ -107,6 +114,12 @@ impl AccountDebitCredit for Account {
         self.assert_is_not_locked()?;
 
         if let TransactionTag::Deposit(amount) = tx.tag {
+            self.book
+                .insert(
+                    tx.id,
+                    tx.clone().into(),
+                );
+
             self.amount_available += amount;
 
             Ok(
@@ -151,10 +164,11 @@ impl AccountBookActions for Account {
             self.find_book_entry(&tx)?
                 .clone();
 
-        // check if we're disputing a balance-flow transaction
-        if !subject_tx.is_balance_flow_tx() {
+        if !subject_tx.is_deposit() {
             return Err(ExecutionError::InvalidTransactionType);
         }
+
+        self.amount_available -= subject_tx.deposit_amount()?;
 
         self.book.remove(&tx.id);
         self.book_disputed.insert(tx.id, subject_tx);
@@ -170,10 +184,11 @@ impl AccountBookActions for Account {
             self.find_disputed_book_entry(&tx)?
                 .clone();
 
-        // check if we're disputing a balance-flow transaction
-        if !subject_tx.is_balance_flow_tx() {
+        if !subject_tx.is_deposit() {
             return Err(ExecutionError::InvalidTransactionType);
         }
+
+        self.amount_available += subject_tx.deposit_amount()?;
 
         self.book_disputed.remove(&tx.id);
         self.book.insert(tx.id, subject_tx);
@@ -189,8 +204,7 @@ impl AccountBookActions for Account {
             self.find_disputed_book_entry(&tx)?
                 .clone();
 
-        // check if we're disputing a balance-flow transaction
-        if !subject_tx.is_balance_flow_tx() {
+        if !subject_tx.is_deposit() {
             return Err(ExecutionError::InvalidTransactionType);
         }
 
@@ -206,31 +220,31 @@ impl AccountBookActions for Account {
 impl TransactionExecution for Account {
     fn execute_transaction(
         &mut self,
-        tx: Transaction,
+        tx: &Transaction,
     ) -> Result<ExecutionResult, ExecutionError> {
         match tx.tag {
             // balance flow
 
             TransactionTag::Deposit(_) => {
-                self.credit(&tx)?;
+                self.credit(tx)?;
             }
 
             TransactionTag::Withdrawal(_) => {
-                self.debit(&tx)?;
+                self.debit(tx)?;
             }
 
             // administrative
 
             TransactionTag::Dispute => {
-                self.dispute_book_entry(&tx)?;
+                self.dispute_book_entry(tx)?;
             }
 
             TransactionTag::Resolve => {
-                self.resolve_book_entry(&tx)?;
+                self.resolve_book_entry(tx)?;
             }
 
             TransactionTag::Chargeback => {
-                self.chargeback_book_entry(&tx)?;
+                self.chargeback_book_entry(tx)?;
             }
         };
 

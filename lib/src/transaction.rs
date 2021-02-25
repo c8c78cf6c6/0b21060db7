@@ -1,8 +1,8 @@
 use crate::execution::ExecutionError;
-use crate::traits::transaction::TagConstraints;
+use crate::traits::transaction::{TagConstraints, BookEntryExt};
 
 // amounts are in tenth of cent precision
-#[derive(Copy, Clone)]
+#[derive(Debug, Copy, Clone)]
 pub enum TransactionTag {
     // balance flows
 
@@ -17,9 +17,16 @@ pub enum TransactionTag {
 }
 
 impl TagConstraints for TransactionTag {
-    fn is_balance_flow_tx(&self) -> bool {
-        if let TransactionTag::Deposit(_)
-        | TransactionTag::Withdrawal(_) = self {
+    fn is_deposit(&self) -> bool {
+        if let TransactionTag::Deposit(_) = self {
+            true
+        } else {
+            false
+        }
+    }
+
+    fn is_withdrawal(&self) -> bool {
+        if let TransactionTag::Withdrawal(_) = self {
             true
         } else {
             false
@@ -27,20 +34,43 @@ impl TagConstraints for TransactionTag {
     }
 }
 
+#[derive(Copy, Clone)]
 pub struct Transaction {
     pub id: u32,
     pub client_id: u16,
     pub tag: TransactionTag,
 }
 
-#[derive(Copy, Clone)]
+#[derive(Debug, Copy, Clone)]
 pub struct LedgerBookEntry(pub TransactionTag);
 
+impl BookEntryExt for LedgerBookEntry {
+    fn deposit_amount(&self) -> Result<i64, ExecutionError> {
+        match self.0 {
+            TransactionTag::Deposit(amount) => Ok(amount),
+            _ => Err(ExecutionError::InvalidTransactionType),
+        }
+    }
+
+    fn withdrawal_amount(&self) -> Result<i64, ExecutionError>{
+        match self.0 {
+            TransactionTag::Withdrawal(amount) => Ok(amount),
+            _ => Err(ExecutionError::InvalidTransactionType),
+        }
+    }
+}
+
 impl TagConstraints for LedgerBookEntry {
-    fn is_balance_flow_tx(&self) -> bool {
+    fn is_deposit(&self) -> bool {
         let LedgerBookEntry(ref tag) = self;
 
-        tag.is_balance_flow_tx()
+        tag.is_deposit()
+    }
+
+    fn is_withdrawal(&self) -> bool {
+        let LedgerBookEntry(ref tag) = self;
+
+        tag.is_withdrawal()
     }
 }
 

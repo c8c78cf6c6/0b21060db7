@@ -4,6 +4,6 @@ use crate::transaction::Transaction;
 pub trait TransactionExecution {
     fn execute_transaction(
         &mut self,
-        tx: Transaction,
+        tx: &Transaction,
     ) -> Result<ExecutionResult, ExecutionError>;
 }
