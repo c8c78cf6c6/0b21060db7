@@ -15,9 +15,9 @@ pub struct Account {
 
     amount_available: i64,
 
-    pub book: BTreeMap<u32, LedgerBookEntry>,
-    pub book_disputed: BTreeMap<u32, LedgerBookEntry>,
-    pub book_chargeback: BTreeMap<u32, LedgerBookEntry>,
+    book: BTreeMap<u32, LedgerBookEntry>,
+    book_disputed: BTreeMap<u32, LedgerBookEntry>,
+    book_chargeback: BTreeMap<u32, LedgerBookEntry>,
 }
 
 impl Account {
@@ -148,7 +148,17 @@ impl AccountBookEntry for Account {
         &self,
         tx: &Transaction,
     ) -> Result<&LedgerBookEntry, ExecutionError> {
-        match self.book.get(&tx.id) {
+        match self.book_disputed.get(&tx.id) {
+            None => Err(ExecutionError::InvalidTransaction),
+            Some(tx) => Ok(tx),
+        }
+    }
+
+    fn find_chargeback_book_entry(
+        &self,
+        tx: &Transaction,
+    ) -> Result<&LedgerBookEntry, ExecutionError> {
+        match self.book_chargeback.get(&tx.id) {
             None => Err(ExecutionError::InvalidTransaction),
             Some(tx) => Ok(tx),
         }

@@ -23,6 +23,11 @@ pub trait AccountBookEntry {
         &self,
         tx: &Transaction,
     ) -> Result<&LedgerBookEntry, ExecutionError>;
+
+    fn find_chargeback_book_entry(
+        &self,
+        tx: &Transaction,
+    ) -> Result<&LedgerBookEntry, ExecutionError>;
 }
 
 pub trait AccountBookActions {
