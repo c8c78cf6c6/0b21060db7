@@ -2,3 +2,5 @@
 .DS_Store
 .idea
 node_modules
+data/big_test.csv
+data/small_test.csv
