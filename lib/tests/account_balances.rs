@@ -16,9 +16,9 @@ fn fake_tx(
     }
 }
 
-type TestCases = Vec<(Vec<Transaction>, (i64, i64, i64, bool))>;
+type TestCasesBalances = Vec<(Vec<Transaction>, (i64, i64, i64, bool))>;
 
-fn run_test(cases: TestCases) {
+fn run_test_balances(cases: TestCasesBalances) {
     for case in cases.iter() {
         let (
             txs,
@@ -35,7 +35,15 @@ fn run_test(cases: TestCases) {
         );
 
         for tx in txs.iter() {
-            dbg!(account.execute_transaction(&tx));
+            dbg!(account.execute_transaction(dbg!(&tx)));
+            dbg!(&account.book);
+            dbg!(&account.book_disputed);
+            dbg!(&account.book_chargeback);
+            dbg!(
+                &account.amount_available(),
+                &account.amount_held(),
+                &account.amount_total(),
+            );
         }
 
         assert_eq!(
@@ -62,7 +70,7 @@ fn run_test(cases: TestCases) {
 
 #[test]
 fn account_basic_balance_credit_debit_check() {
-    run_test(
+    run_test_balances(
         // basic balance credit / debit check
         vec!(
             (
@@ -87,7 +95,7 @@ fn account_basic_balance_credit_debit_check() {
 
 #[test]
 fn account_verify_tx_reverse_hijack_by_reusing_id_impossible() {
-    run_test(
+    run_test_balances(
         // basic balance credit / debit check
         vec!(
             (
@@ -98,13 +106,43 @@ fn account_verify_tx_reverse_hijack_by_reusing_id_impossible() {
                 ),
                 (15000, 0, 15000, false),
             ),
+            (
+                vec!(
+                    fake_tx(1, TransactionTag::Deposit(15000)),
+                    fake_tx(1, TransactionTag::Deposit(1)),
+                    fake_tx(1, TransactionTag::Dispute),
+                    fake_tx(2, TransactionTag::Withdrawal(15000)),
+                    fake_tx(1, TransactionTag::Chargeback),
+                ),
+                (0, 0, 0, true),
+            ),
+            (
+                vec!(
+                    fake_tx(1, TransactionTag::Deposit(15000)),
+                    // will fail because tx with id 1 exists
+                    fake_tx(1, TransactionTag::Deposit(1)),
+                    fake_tx(1, TransactionTag::Dispute),
+                    // will fail because tx is disputed
+                    fake_tx(2, TransactionTag::Withdrawal(15000)),
+                    fake_tx(1, TransactionTag::Resolve),
+                    // will fail because tx with id 1 exists
+                    fake_tx(1, TransactionTag::Deposit(1)),
+                    fake_tx(1, TransactionTag::Dispute),
+                    fake_tx(1, TransactionTag::Chargeback),
+                    // everything below will fail because account is locked
+                    fake_tx(3, TransactionTag::Deposit(20000)),
+                    fake_tx(4, TransactionTag::Deposit(20000)),
+                    fake_tx(5, TransactionTag::Withdrawal(2)),
+                ),
+                (0, 0, 0, true),
+            ),
         ),
     );
 }
 
 #[test]
 fn account_verify_user_cannot_overdraw() {
-    run_test(
+    run_test_balances(
         // basic balance credit / debit check
         vec!(
             (
@@ -123,7 +161,7 @@ fn account_verify_user_cannot_overdraw() {
 
 #[test]
 fn account_basic_dispute_referencing_older_tx_sanity_check() {
-    run_test(
+    run_test_balances(
         // basic dispute referencing older tx sanity check
         vec!(
             (
@@ -141,7 +179,7 @@ fn account_basic_dispute_referencing_older_tx_sanity_check() {
 
 #[test]
 fn account_verify_chargeback_execution_order_respect() {
-    run_test(
+    run_test_balances(
         // verify chargeback can't just randomly happen
         // but requires dispute beforehand
         vec!(
@@ -158,7 +196,7 @@ fn account_verify_chargeback_execution_order_respect() {
 
 #[test]
 fn account_verify_resolve_dispute_sanity() {
-    run_test(
+    run_test_balances(
         // verify resolve-dispute sanity
         vec!(
             (
@@ -176,7 +214,7 @@ fn account_verify_resolve_dispute_sanity() {
 
 #[test]
 fn account_dispute_fuzz() {
-    run_test(
+    run_test_balances(
         // verify resolve-dispute sanity
         vec!(
             (

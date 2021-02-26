@@ -12,7 +12,7 @@ pub fn convert_csv_tx_to_transaction(
                 csv_tx.amount.parse(),
                 RunnerError::InvalidColumn(
                     format!(
-                        "{:?} could not be parsed",
+                        "{:?} could not be parsed (amount)",
                         csv_tx.amount,
                     ),
                 )
@@ -48,7 +48,7 @@ pub fn convert_csv_tx_to_transaction(
             csv_tx.client.parse(),
             RunnerError::InvalidColumn(
                 format!(
-                    "{:?} could not be parsed",
+                    "{:?} could not be parsed (client)",
                     csv_tx.amount,
                 ),
             )
@@ -59,7 +59,7 @@ pub fn convert_csv_tx_to_transaction(
             csv_tx.tx.parse(),
             RunnerError::InvalidColumn(
                 format!(
-                    "{:?} could not be parsed",
+                    "{:?} could not be parsed (tx)",
                     csv_tx.amount,
                 ),
             )

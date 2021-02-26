@@ -71,18 +71,35 @@ impl Runner {
             self.csv_reader
                 .deserialize::<CsvTransaction>();
 
+        // first line should be header
+        let mut line = 2;
+
         while let Some(record) = records.next().await {
             let record = unwrap_or_err!(
                 record,
                 RunnerError::InvalidCsvRow
             );
 
-            let tx: Transaction = record.clone().try_into()?;
+            let tx: Transaction =
+                match record.clone().try_into() {
+                    Err(err) => {
+                        eprintln!(
+                            "OUTPUT MAY BE INVALID -- Error while parsing line {}: {:?}",
+                            line,
+                            err,
+                        );
 
-            self.ledger
+                        continue;
+                    },
+                    Ok(tx) => tx,
+                };
+
+            dbg!(self.ledger
                 .execute_transaction(
-                    &tx,
-                );
+                    dbg!(&tx),
+                ));
+
+            line += 1;
         }
 
         for (_, account) in self.ledger.accounts().iter() {

@@ -15,9 +15,9 @@ pub struct Account {
 
     amount_available: i64,
 
-    book: BTreeMap<u32, LedgerBookEntry>,
-    book_disputed: BTreeMap<u32, LedgerBookEntry>,
-    book_chargeback: BTreeMap<u32, LedgerBookEntry>,
+    pub book: BTreeMap<u32, LedgerBookEntry>,
+    pub book_disputed: BTreeMap<u32, LedgerBookEntry>,
+    pub book_chargeback: BTreeMap<u32, LedgerBookEntry>,
 }
 
 impl Account {
@@ -90,6 +90,13 @@ impl AccountDebitCredit for Account {
             );
         }
 
+        if self.book_chargeback.contains_key(&tx.id)
+            || self.book_disputed.contains_key(&tx.id) {
+            return Err(
+                ExecutionError::TransactionDisputed,
+            );
+        }
+
         if let TransactionTag::Withdrawal(amount) = tx.tag {
             if self.amount_available < amount {
                 return Err(ExecutionError::InsufficientBalance);
@@ -122,6 +129,13 @@ impl AccountDebitCredit for Account {
         if self.book.contains_key(&tx.id) {
             return Err(
                 ExecutionError::TransactionExists,
+            );
+        }
+
+        if self.book_chargeback.contains_key(&tx.id)
+            || self.book_disputed.contains_key(&tx.id) {
+            return Err(
+                ExecutionError::TransactionDisputed,
             );
         }
 
@@ -248,28 +262,26 @@ impl TransactionExecution for Account {
             // balance flow
 
             TransactionTag::Deposit(_) => {
-                self.credit(tx)?;
+                Ok(self.credit(tx)?)
             }
 
             TransactionTag::Withdrawal(_) => {
-                self.debit(tx)?;
+                Ok(self.debit(tx)?)
             }
 
             // administrative
 
             TransactionTag::Dispute => {
-                self.dispute_book_entry(tx)?;
+                Ok(self.dispute_book_entry(tx)?)
             }
 
             TransactionTag::Resolve => {
-                self.resolve_book_entry(tx)?;
+                Ok(self.resolve_book_entry(tx)?)
             }
 
             TransactionTag::Chargeback => {
-                self.chargeback_book_entry(tx)?;
+                Ok(self.chargeback_book_entry(tx)?)
             }
-        };
-
-        Ok(ExecutionResult::Ok)
+        }
     }
 }

@@ -2,7 +2,7 @@ use crate::execution::ExecutionError;
 use crate::traits::transaction::{TagConstraints, BookEntryExt};
 
 // amounts are in tenth of cent precision
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub enum TransactionTag {
     // balance flows
 
@@ -34,14 +34,14 @@ impl TagConstraints for TransactionTag {
     }
 }
 
-#[derive(Copy, Clone)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub struct Transaction {
     pub id: u32,
     pub client_id: u16,
     pub tag: TransactionTag,
 }
 
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub struct LedgerBookEntry(pub TransactionTag);
 
 impl BookEntryExt for LedgerBookEntry {
