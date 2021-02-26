@@ -94,10 +94,10 @@ impl Runner {
                     Ok(tx) => tx,
                 };
 
-            dbg!(self.ledger
+            self.ledger
                 .execute_transaction(
-                    dbg!(&tx),
-                ));
+                    &tx,
+                );
 
             line += 1;
         }

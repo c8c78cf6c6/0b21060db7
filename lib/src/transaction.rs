@@ -1,5 +1,5 @@
 use crate::execution::ExecutionError;
-use crate::traits::transaction::{TagConstraints, BookEntryExt};
+use crate::traits::transaction::{BookEntryExt, TagConstraints};
 
 // amounts are in tenth of cent precision
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
@@ -52,7 +52,7 @@ impl BookEntryExt for LedgerBookEntry {
         }
     }
 
-    fn withdrawal_amount(&self) -> Result<i64, ExecutionError>{
+    fn withdrawal_amount(&self) -> Result<i64, ExecutionError> {
         match self.0 {
             TransactionTag::Withdrawal(amount) => Ok(amount),
             _ => Err(ExecutionError::InvalidTransactionType),

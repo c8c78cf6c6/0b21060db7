@@ -1,11 +1,10 @@
-use hashbrown::HashMap;
+use std::collections::BTreeMap;
 
 use crate::execution::{ExecutionError, ExecutionResult};
 use crate::traits::account::{AccountBookActions, AccountBookEntry, AccountDebitCredit};
 use crate::traits::execution::TransactionExecution;
-use crate::traits::transaction::{TagConstraints, BookEntryExt};
+use crate::traits::transaction::{BookEntryExt, TagConstraints};
 use crate::transaction::{LedgerBookEntry, Transaction, TransactionTag};
-use std::collections::BTreeMap;
 
 #[derive(Clone)]
 pub struct Account {
